@@ -1,0 +1,21 @@
+# Default requests/limits for any container that doesn't specify its own —
+# every pod gets a Guaranteed-or-Burstable QoS class by default instead of
+# silently falling into BestEffort, which was the root cause of the
+# OOMKill-cascade incident.
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: platform-default-limits
+  namespace: platform
+spec:
+  limits:
+    - type: Container
+      defaultRequest:
+        cpu: 100m
+        memory: 128Mi
+      default:
+        cpu: 500m
+        memory: 512Mi
+      max:
+        cpu: "4"
+        memory: 8Gi

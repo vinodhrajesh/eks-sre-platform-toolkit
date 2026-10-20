@@ -1,0 +1,23 @@
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: platform-critical
+value: 1000000
+globalDefault: false
+description: "APIs and request-path workers — never preempted during node pressure."
+---
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: platform-standard
+value: 100000
+globalDefault: true
+description: "Default for most application workloads."
+---
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: platform-batch
+value: 10000
+globalDefault: false
+description: "Batch/background jobs — first to be preempted under node pressure."

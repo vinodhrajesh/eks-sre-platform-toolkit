@@ -1,0 +1,25 @@
+# Added after the node-consolidation incident: without a PDB, Karpenter
+# (or a routine node upgrade) can evict every replica of a workload at
+# once. minAvailable here guarantees at least one replica survives any
+# single voluntary disruption.
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: platform-api-pdb
+  namespace: platform
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: platform-api
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: platform-worker-pdb
+  namespace: platform
+spec:
+  maxUnavailable: 25%
+  selector:
+    matchLabels:
+      app: platform-worker

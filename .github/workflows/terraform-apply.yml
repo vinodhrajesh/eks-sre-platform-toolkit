@@ -1,0 +1,37 @@
+name: Terraform apply (manual approval gate)
+
+# Apply only ever runs on merge to main, and only after the `production`
+# environment's required reviewers approve the GitHub Environment gate.
+# No ad-hoc `terraform apply` from a laptop against production state.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "terraform/**"
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    environment:
+      name: production # configured in repo settings with required reviewers
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.9.0"
+
+      - name: Init
+        run: terraform -chdir=terraform/envs/production init
+
+      - name: Plan
+        run: terraform -chdir=terraform/envs/production plan -out=plan.out
+
+      - name: Guardrail check (blocking)
+        run: |
+          terraform -chdir=terraform/envs/production show -json plan.out > plan.json
+          python agent-ops/terraform_plan_guardrail.py plan.json --approver "${{ github.actor }}"
+
+      - name: Apply
+        run: terraform -chdir=terraform/envs/production apply plan.out

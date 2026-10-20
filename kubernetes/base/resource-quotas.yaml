@@ -1,0 +1,16 @@
+# Namespace-level ceiling so one team's workload can't starve the rest of
+# the cluster — the gap that let the OOMKill cascade in
+# docs/incident-postmortems/2026-xx-oomkill-cascade-self-healing-agent.md
+# turn into a cluster-wide event instead of a single-namespace one.
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: platform-quota
+  namespace: platform
+spec:
+  hard:
+    requests.cpu: "40"
+    requests.memory: 80Gi
+    limits.cpu: "80"
+    limits.memory: 160Gi
+    pods: "500"

@@ -1,0 +1,23 @@
+# Event-driven autoscaling for queue workers: scales on queue depth instead
+# of CPU, so the fleet is already warm by the time a traffic spike's
+# downstream work actually lands, rather than scaling reactively on CPU
+# after the backlog has already built up.
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: platform-worker-scaler
+  namespace: platform
+spec:
+  scaleTargetRef:
+    name: platform-worker
+  minReplicaCount: 2
+  maxReplicaCount: 40
+  cooldownPeriod: 120
+  triggers:
+    - type: aws-sqs-queue
+      metadata:
+        queueURL: https://sqs.ap-south-1.amazonaws.com/REPLACE_ME/platform-work-queue
+        queueLength: "20"
+        awsRegion: ap-south-1
+      authenticationRef:
+        name: keda-aws-credentials

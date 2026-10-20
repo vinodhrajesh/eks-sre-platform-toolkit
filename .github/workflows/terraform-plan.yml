@@ -1,0 +1,52 @@
+name: Terraform plan (GitOps)
+
+# Every infra change — whether written by hand or by a coding agent — gets
+# a plan posted to the PR for human review. There is no path to `apply`
+# that skips this.
+
+on:
+  pull_request:
+    paths:
+      - "terraform/**"
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        environment: [staging, production]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.9.0"
+
+      - name: Format check
+        run: terraform -chdir=terraform/envs/${{ matrix.environment }} fmt -check -recursive
+
+      - name: Init
+        run: terraform -chdir=terraform/envs/${{ matrix.environment }} init -backend=false
+
+      - name: Validate
+        run: terraform -chdir=terraform/envs/${{ matrix.environment }} validate
+
+      - name: Plan
+        run: |
+          terraform -chdir=terraform/envs/${{ matrix.environment }} plan \
+            -out=plan.out -input=false -lock=false
+          terraform -chdir=terraform/envs/${{ matrix.environment }} show -json plan.out > plan.json
+
+      - name: Run agent-ops plan guardrail
+        run: |
+          python agent-ops/terraform_plan_guardrail.py \
+            terraform/envs/${{ matrix.environment }}/plan.json || true
+          # Non-blocking in CI (informational) — the guardrail's hard block
+          # is enforced at apply time in terraform-apply.yml, where a human
+          # approver is actually known.
+
+      - name: Upload plan artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: plan-${{ matrix.environment }}
+          path: terraform/envs/${{ matrix.environment }}/plan.json

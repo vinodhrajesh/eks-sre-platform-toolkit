@@ -1,0 +1,37 @@
+name: Build self-healing-agent image
+
+on:
+  pull_request:
+    paths:
+      - "apps/self-healing-agent/**"
+  push:
+    branches: [main]
+    paths:
+      - "apps/self-healing-agent/**"
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies + test deps
+        run: |
+          pip install -r apps/self-healing-agent/requirements.txt
+          pip install pytest
+
+      - name: Run unit tests
+        run: pytest apps/self-healing-agent/tests -v
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Build image (no push — registry push wired up per-environment)
+        uses: docker/build-push-action@v6
+        with:
+          context: apps/self-healing-agent
+          push: false
+          tags: self-healing-agent:${{ github.sha }}
