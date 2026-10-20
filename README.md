@@ -65,6 +65,18 @@ docker build -t self-healing-agent:local .
 docker run --rm -v ~/.kube/config:/root/.kube/config self-healing-agent:local
 ```
 
+## Publish to GitHub
+
+This folder already has a `main` commit. Create an empty public repo named
+`eks-sre-platform-toolkit`, then:
+
+```bash
+git remote add origin git@github.com:YOUR-USERNAME/eks-sre-platform-toolkit.git
+git push -u origin main
+```
+
+Replace `YOUR-USERNAME` on the resume contact line so it matches.
+
 ## License
 
 MIT — see [`LICENSE`](LICENSE).
